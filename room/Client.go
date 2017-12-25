@@ -1,4 +1,4 @@
-package main
+package room
 
 import (
 	"flag"
@@ -11,7 +11,10 @@ import (
 
 var addr = flag.String("addr", "localhost:12345", "http service address")
 
-func main() {
+type Chat struct {
+}
+
+func (c *Chat) ChatRoomStart() {
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
 	var dialer *websocket.Dialer
 
@@ -21,7 +24,7 @@ func main() {
 		return
 	}
 
-	go timeWriter(conn)
+	go c.timeWriter(conn)
 
 	for {
 		_, message, err := conn.ReadMessage()
@@ -34,9 +37,9 @@ func main() {
 	}
 }
 
-func timeWriter(conn *websocket.Conn) {
+func (c *Chat) timeWriter(conn *websocket.Conn) {
 	for {
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 30)
 		conn.WriteMessage(websocket.TextMessage, []byte(time.Now().Format("2006-01-02 15:04:05")))
 	}
 }

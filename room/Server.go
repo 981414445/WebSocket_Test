@@ -1,4 +1,4 @@
-package main
+package room
 
 import (
 	"encoding/json"
@@ -8,6 +8,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
 )
+
+type Server struct {
+}
 
 type ClientManager struct {
 	clients    map[*Client]bool
@@ -106,14 +109,12 @@ func (c *Client) write() {
 	}
 }
 
-func main() {
+func (s *Server) ServerStart() {
 	fmt.Println("Starting application...")
 	go manager.start()
-	http.HandleFunc("/ws", wsPage)
-	http.ListenAndServe(":12345", nil)
 }
 
-func wsPage(res http.ResponseWriter, req *http.Request) {
+func (s *Server) WsPage(res http.ResponseWriter, req *http.Request) {
 	conn, error := (&websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}).Upgrade(res, req, nil)
 	if error != nil {
 		http.NotFound(res, req)
