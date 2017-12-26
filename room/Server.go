@@ -2,8 +2,8 @@ package room
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
@@ -17,6 +17,7 @@ type ClientManager struct {
 	broadcast  chan []byte
 	register   chan *Client
 	unregister chan *Client
+	chatTime   int64
 }
 
 type Client struct {
@@ -36,6 +37,7 @@ var manager = ClientManager{
 	register:   make(chan *Client),
 	unregister: make(chan *Client),
 	clients:    make(map[*Client]bool),
+	chatTime:   0,
 }
 
 func (manager *ClientManager) start() {
@@ -53,18 +55,21 @@ func (manager *ClientManager) start() {
 				manager.send(jsonMessage, conn)
 			}
 		case message := <-manager.broadcast:
+			new(Chat).printTime(manager)
 			for conn := range manager.clients {
+				manager.chatTime = time.Now().Unix()
 				select {
 				case conn.send <- message:
-				default:
-					close(conn.send)
-					delete(manager.clients, conn)
+					// default:
+					// 	close(conn.send)
+					// 	delete(manager.clients, conn)
 				}
 			}
 		}
 	}
 }
 
+// 聊天室发送用户登录或断开信息
 func (manager *ClientManager) send(message []byte, ignore *Client) {
 	for conn := range manager.clients {
 		if conn != ignore {
@@ -110,7 +115,6 @@ func (c *Client) write() {
 }
 
 func (s *Server) ServerStart() {
-	fmt.Println("Starting application...")
 	go manager.start()
 }
 
